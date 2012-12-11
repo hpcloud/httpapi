@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"fmt"
 	"bytes"
 	"encoding/json"
 	"github.com/srid/log"
@@ -9,20 +10,20 @@ import (
 	"reflect"
 )
 
-// APIHandler handles a single API endpoint
-type APIHandler struct {
+// Handler handles a single API endpoint
+type Handler struct {
 	// RequestStruct is a struct to store the fields of request
 	// paramemters, passed as JSON from the client.
 	RequestStruct interface{}
 }
 
-func (h APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// FIXME: best way to report errors in ServerHTTP?
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Infof("httpapi -- %+v", r)
 	request := reflect.New(reflect.TypeOf(h.RequestStruct)).Interface().(RequestParams)
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		// FIXME: best way to report errors?
 		log.Error(err)
 		return
 	}
@@ -31,17 +32,30 @@ func (h APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = request.HandleRequest(w)
+	response, err := request.HandleRequest()
 	if err != nil {
 		log.Errorf("Request error -- %s", err)
 		http.Error(w, err.Error(), 500)
+	}else{
+		data, err := json.Marshal(response)
+		if err != nil {
+			err = fmt.Errorf("Error encoding response into JSON: %s", err)
+			http.Error(w, err.Error(), 500)
+		}else{
+			_, err = w.Write(data)
+			if err != nil {
+				log.Errorf("Failed to write http response: %s", err)
+			}
+		}
 	}
 }
 
 type RequestParams interface {
-	// HandleRequest is called when a request comes in. 
+	// HandleRequest is called when a request comes in. POST body will
+	// be decoded into the receiver; returned value will be encoded to
+	// JSON before responding to the client.
 	// FIXME: pre-define errors for appropriate HTTP codes (404, 500) ...
-	HandleRequest(http.ResponseWriter) error
+	HandleRequest() (interface{}, error)
 }
 
 // RequestPost initiates a POST request from the client side.
