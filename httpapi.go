@@ -3,7 +3,6 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/srid/log"
 	"io/ioutil"
 	"net/http"
@@ -28,24 +27,21 @@ func (h APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := json.Unmarshal(body, request); err != nil {
-		log.Error(err)
+		log.Errorf("Error decoding JSON body in POST request (%s). Original body was: %s", err, string(body))
 		return
 	}
 
-	data, err := request.HandleRequest()
+	err = request.HandleRequest(w)
 	if err != nil {
-		log.Error(err)
-		fmt.Fprintf(w, "FAIL %s", err)
-		return
+		log.Errorf("Request error -- %s", err)
+		http.Error(w, err.Error(), 500)
 	}
-	fmt.Fprintf(w, data)
 }
 
 type RequestParams interface {
-	// HandleRequest is called when a request comes in. It must return
-	// the response string or the error object.
+	// HandleRequest is called when a request comes in. 
 	// FIXME: pre-define errors for appropriate HTTP codes (404, 500) ...
-	HandleRequest() (string, error)
+	HandleRequest(http.ResponseWriter) error
 }
 
 // RequestPost initiates a POST request from the client side.
