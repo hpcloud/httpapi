@@ -18,7 +18,7 @@ type APIHandler struct {
 }
 
 func (h APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Infof("httpapi %s -- %s", h.RequestStruct, r)
+	log.Infof("httpapi -- %+v", r)
 	request := reflect.New(reflect.TypeOf(h.RequestStruct)).Interface().(RequestParams)
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -31,7 +31,7 @@ func (h APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 		return
 	}
-	log.Info(request)
+
 	data, err := request.HandleRequest()
 	if err != nil {
 		log.Error(err)
