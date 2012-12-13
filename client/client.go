@@ -7,8 +7,9 @@ import (
 	"net/http"
 )
 
-// RequestPost initiates a POST request from the client side.
-func RequestPost(url string, params interface{}) ([]byte, error) {
+// RequestPost initiates a POST request from the client side. Accepts
+// params as JSON, and returns response as decoded JSON.
+func RequestPost(url string, params interface{}) (map[string]interface{}, error) {
 	data, err := json.Marshal(params)
 	if err != nil {
 		return nil, err
@@ -20,9 +21,16 @@ func RequestPost(url string, params interface{}) ([]byte, error) {
 	}
 	defer response.Body.Close()
 
-	body, err := ioutil.ReadAll(response.Body)
+	data, err = ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
-	return body, nil
+
+	var reply map[string]interface{}
+	err = json.Unmarshal(data, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	return reply, nil
 }
