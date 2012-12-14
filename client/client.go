@@ -10,6 +10,8 @@ import (
 
 type Client http.Client
 
+var DefaultClient = &Client{}
+
 // Value type for json decoded values for request params and response
 // body of a HTTP API
 type Hash map[string]interface{}
@@ -57,30 +59,13 @@ func (c *Client) DoRequest(req *http.Request) (Hash, error){
 	return v, nil
 }
 
-// RequestPost initiates a POST request from the client side. Accepts
-// params as JSON, and returns response as decoded JSON.
-func RequestPost(url string, params interface{}) (Hash, error) {
-	data, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
-	}
-	response, err := http.Post(
-		url, "application/json", bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	data, err = ioutil.ReadAll(response.Body)
+// Post is a version of http.Post accepting JSON params and returning
+// the same.
+func Post(url string, params interface{}) (Hash, error) {
+	req, err := NewRequest("POST", url, params)
 	if err != nil {
 		return nil, err
 	}
 
-	var reply Hash
-	err = json.Unmarshal(data, &reply)
-	if err != nil {
-		return nil, err
-	}
-
-	return reply, nil
+	return DefaultClient.DoRequest(req)
 }
