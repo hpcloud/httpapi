@@ -3,7 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/srid/log"
+	"github.com/ActiveState/log"
 	"io/ioutil"
 	"net/http"
 	"reflect"
