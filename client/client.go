@@ -32,31 +32,30 @@ func NewRequest(method string, url string, params interface{}) (*http.Request, e
 }
 
 // DoRequest a wrapper over Do handling json encoding
-func (c *Client) DoRequest(req *http.Request) (Hash, error){
+func (c *Client) DoRequest(req *http.Request, response interface{}) error{
 	resp, err := (*http.Client)(c).Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	
-	var v Hash
-	err = json.Unmarshal(data, &v)
+
+	err = json.Unmarshal(data, response)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// XXX: accept other codes
 	if !(resp.StatusCode == 200 || resp.StatusCode == 302) {
-		return nil, fmt.Errorf("HTTP request with failure code (%d); body -- %v",
-			resp.StatusCode, v)
+		return fmt.Errorf("HTTP request with failure code (%d); body -- %v",
+			resp.StatusCode, response)
 	}
 	
-	return v, nil
+	return nil
 }
 
 // Post is a version of http.Post accepting JSON params and returning
@@ -67,5 +66,6 @@ func Post(url string, params interface{}) (Hash, error) {
 		return nil, err
 	}
 
-	return DefaultClient.DoRequest(req)
+	var h Hash
+	return h, DefaultClient.DoRequest(req, &h)
 }
