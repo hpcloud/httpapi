@@ -12,10 +12,6 @@ type Client http.Client
 
 var DefaultClient = &Client{}
 
-// Value type for json decoded values for request params and response
-// body of a HTTP API
-type Hash map[string]interface{}
-
 // NewRequest is wrapper over http.NewRequest handling json encoding
 // for params.
 func NewRequest(method string, url string, params interface{}) (*http.Request, error) {
@@ -60,12 +56,11 @@ func (c *Client) DoRequest(req *http.Request, response interface{}) error{
 
 // Post is a version of http.Post accepting JSON params and returning
 // the same.
-func Post(url string, params interface{}) (Hash, error) {
+func Post(url string, params interface{}, response interface{}) error {
 	req, err := NewRequest("POST", url, params)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var h Hash
-	return h, DefaultClient.DoRequest(req, &h)
+	return DefaultClient.DoRequest(req, response)
 }
