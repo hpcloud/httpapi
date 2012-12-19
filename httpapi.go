@@ -18,32 +18,38 @@ type Handler struct {
 
 // FIXME: best way to report errors in ServerHTTP?
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Infof("httpapi -- %+v", r)
+	// Create a logger with a prefix unique to this request. Assuming
+	// that a new request object is created per request, its memory
+	// address (%p) should give us an unique identifier.
+	l := log.New()
+	l.SetPrefix(fmt.Sprintf("[HTTP:%p] ", r))
+	
+	l.Infof("%+v", r)
 	request := reflect.New(reflect.TypeOf(h.RequestStruct)).Interface().(RequestParams)
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Error(err)
+		l.Error(err)
 		return
 	}
 	if err := json.Unmarshal(body, request); err != nil {
-		log.Errorf("Error decoding JSON body in POST request (%s). Original body was: %s", err, string(body))
+		l.Errorf("Unable to decode JSON body in POST request (%s). Original body was: %s", err, string(body))
 		return
 	}
 
 	response, err := request.HandleRequest()
 	if err != nil {
-		log.Errorf("Request error -- %s", err)
+		l.Errorf("Failed to handle this request -- %s", err)
 		http.Error(w, err.Error(), 500)
 	} else {
 		data, err := json.Marshal(response)
 		if err != nil {
-			err = fmt.Errorf("Error encoding response into JSON: %s", err)
+			err = fmt.Errorf("Unable to response into JSON: %s", err)
 			http.Error(w, err.Error(), 500)
 		} else {
 			_, err = w.Write(data)
 			if err != nil {
-				log.Errorf("Failed to write http response: %s", err)
+				l.Errorf("Unable to write http response: %s", err)
 			}
 		}
 	}
