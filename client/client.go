@@ -29,7 +29,7 @@ func NewRequest(method string, url string, params interface{}) (*http.Request, e
 
 // DoRequest a wrapper over Do handling json encoding
 func (c *Client) DoRequest(req *http.Request, response interface{}) error{
-	resp, err := (*http.Client)(c).Do(req)
+	resp, err := (*http.Client)(c).Transport.RoundTrip(req)
 	if err != nil {
 		return err
 	}
