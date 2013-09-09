@@ -23,7 +23,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// address (%p) should give us an unique identifier.
 	l := log.New()
 	l.SetPrefix(fmt.Sprintf("[HTTP:%p] ", r))
-	
+
 	l.Infof("%+v", r)
 	request := reflect.New(reflect.TypeOf(h.RequestStruct)).Interface().(RequestParams)
 
