@@ -40,15 +40,16 @@ func (c *Client) DoRequest(req *http.Request, response interface{}) error {
 		return err
 	}
 
-	err = json.Unmarshal(data, response)
-	if err != nil {
-		return err
-	}
-
 	// XXX: accept other codes
 	if !(resp.StatusCode == 200 || resp.StatusCode == 302) {
 		return fmt.Errorf("HTTP request with failure code (%d); body -- %v",
-			resp.StatusCode, response)
+			resp.StatusCode, string(data))
+	}
+
+	err = json.Unmarshal(data, response)
+	if err != nil {
+		// fmt.Printf("==> %v <==\n", string(data))
+		return fmt.Errorf("Response not in JSON format; %v", err)
 	}
 
 	return nil
