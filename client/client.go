@@ -40,9 +40,8 @@ func (c *Client) DoRequest(req *http.Request, response interface{}) error {
 		return err
 	}
 
-	// XXX: accept other codes
-	if !(resp.StatusCode == 200 || resp.StatusCode == 302) {
-		return fmt.Errorf("HTTP request with failure code (%d); body -- %v",
+	if !IsHttpSuccess(resp.StatusCode) {
+		return fmt.Errorf("HTTP request failed with code %d and body << %v >>.",
 			resp.StatusCode, string(data))
 	}
 
@@ -64,6 +63,11 @@ func Post(url string, params interface{}, response interface{}) error {
 	}
 
 	return DefaultClient.DoRequest(req, response)
+}
+
+func IsHttpSuccess(code int) bool {
+	// XXX: accept other codes
+	return (code == 200 || code == 201 || code == 302)
 }
 
 func init() {
